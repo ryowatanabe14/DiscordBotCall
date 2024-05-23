@@ -1,4 +1,5 @@
 from collections import defaultdict
+import threading
 from typing import Literal, Optional, Union
 
 import discord
@@ -32,32 +33,15 @@ from src.moderation import (
 )
 
 # Webサーバにてping応答する用
-import os
-import discord
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import http.server
+import socketserver
 
-# HTTP Server for health check
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/':
-            self.send_response(200)
-            self.send_header('Content-type', 'text/html')
-            self.end_headers()
-            self.wfile.write(b'Healthy')
-        else:
-            self.send_response(404)
-            self.end_headers()
+PORT = 8000
+Handler = http.server.SimpleHTTPRequestHandler
 
-def run_http_server():
-    server_address = ('', 8000)
-    httpd = HTTPServer(server_address, HealthHandler)
+with socketserver.TCPServer(("", PORT), Handler) as httpd:
+    print("serving at port", PORT)
     httpd.serve_forever()
-
-# Start HTTP server in a separate thread
-http_thread = threading.Thread(target=run_http_server)
-http_thread.daemon = True
-http_thread.start()
 
 # discord用
 logging.basicConfig(
